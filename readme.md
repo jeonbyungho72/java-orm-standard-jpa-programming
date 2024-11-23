@@ -3,7 +3,7 @@
 1. [JPA 소개](01.introduction_of_jpa/readme.md)
 1. [JPA 시작](02.start_jpa/readme.md)
 1. [영속성 관리](03.persistence_manager/readme.md)
-1. 엔티티 매핑
+1. [엔티티 매핑](04.entity-mapping/readme.md)
 1. 연관관계 매핑 기초
 1. 다양한 연관관계 매핑
 1. 고급 매핑
