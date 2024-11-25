@@ -124,6 +124,11 @@ JPA는 `persistence.xml`을 사용해서 필요한 설정 정보를 관리한다
     - `hibernate.format_sql`: 하이버네이트가 실해나 SQL을 출력할 때 보기 쉽게 정렬해준다.
     - `hibernate.use_sql_comments`: 쿼리를 출력할 때 주석도 함께 출력한다.
     - `hibernate.id.new_generator_mappings`: JPA 표준에 맞춘 새로운 키 생성 전략을 사용한다.
+    - `hibernate.hbm2ddl.auto`: 애플리케이션 실행 시점에서 데이터베이스 테이블을 자동으로 생성한다.
+        - `create`: 기존 테이블을 삭제하고 새로 생성한다. (`DROP + CREATE`)
+        - `create-drop`: 기존 테이블을 삭제하고 새로 생성한다. 애플리케이션을 종료하면 생성했던 DDL를 제거한다.(`DROP + CREATE + DROP`)
+        - `update`: 데이터베이스 테이블과 엔티티 매핑정보를 비교해서 변경 사항만 수정한다.
+        - `validate`: 데이터베이스 테이블과 엔티티 매핑정보를 비교해서 차이가 있으면 경고를 남기고 애플리케이션을 실행하지 않는다. (이 설정은 DDL을 수정하지 않는다.)
 
 JPA 표준 속성(`javax.persistence`로 시작하는 속성들)은 특정 구현체에 종속되지 않는다.  
 반면 하이버네이트 속성(`hibernate`로 시작하는 속성들)은 하이버네이트 전용 속성이므로 하이버네이트에서만 적용된다.
