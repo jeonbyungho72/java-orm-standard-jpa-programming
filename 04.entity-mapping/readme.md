@@ -51,10 +51,12 @@ JPA는 데이터베이스 스키마를 자동으로 생성하는 기능을 지�
 
 - `@Column`
 
-제약 조건 속성| 기능| 값 타입| 기본값
+속성| 기능| 값 타입| 기본값
 --|--|--|--
-`nullable`| `false`로 지정 시 `not null` 제약조건 추가| `boolean`| `false`
-`length`| 문자의 크기 지정| `int`| 255
+`nullable`| null 값 허용 여부 설정, `false`로 지정 시 `not null` 제약조건 추가| `boolean`| `true`
+`length`| 문자 길이 제약조건, String 타입에만 적용 가능| `int`| 255
+`unique`| 한 컬럼애 유니크 제약조건을 걸 때 사용| `boolean`| `false`
+`columnDefinition`| 데이터베이스 컬럼 정보를 직접 입력| `String`| `""`
 
 - 유니크 제약 조건 예시
 
