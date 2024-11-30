@@ -163,3 +163,199 @@ Hibernate: update Person set age=?, group_id=?, name=? where person_id=?
     ```
     Hibernate: delete from Groups where group_id=?
     ```
+
+# 양방향 연관관계
+
+양방향 객체 연관관계에서 1:N 관계는 여러 건과 연관관계를 맺을 수 있으므로 컬랙션(`List`, `Set`, `Map`, `Collection`)을 사용해야 한다.
+
+데이터베이스 테이블은 외래 키 하나로 양방향을 조회할 수 있다. 이미 두 테이블간 연관관계는 외래 키 하나만으로 양방향 조회가 가능하므로 따로 추가할 내용은 없다.
+
+## 양방향 연관관계 매핑
+
+```java
+@Entity
+class Person {
+    @Id
+    @Column(name = "person_id")
+    private Long id;
+
+    // 연관관계의 주인 필드
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private Group group;
+}
+
+@Entity
+class Group {
+    @Id
+    @Column(name = "group_id")
+    private Long id;
+
+    // 연관관계에서 주인이 아닌 필드
+    @OneToMany(mappedBy = "group")
+    private List<Person> persons = new ArrayList<>();
+}
+```
+
+`@OneToMany`은 1:N 관계에서 사용한다. `mappedBy`속성은 어떤 연관관계를 주인으로 정할 지 설정하는데 사용된다. 반대쪽에 매핑의 필드 이름 값으로 주면 된다.
+
+엔티티를 양방향으로 연관관계로 매핑[^1]하면 각각 서로를 참조하게 된다. 객체의 참조는 둘인데 외래 키는 하나라 둘 사이의 차이가 발생한다.  
+이런 차이로 인해 JPA에서는 두 객체 연관관계 중 하나를 정해서 테이블의 외래 키를 관리해야 하는데 이것을 **연관관계의 주인**이라 한다.(연관관계의 주인을 정하는 것 외래 키 관리자를 선택하는 것이다.)
+
+[^1]: 엄밀히 말하면 객체에는 양방향 연관관계는 없다. 서로 다른 단방향 연관관계를 2개로 로직으로 잘 묶어서 양방향인 것처럼 보이도록 할 뿐이다.
+
+- **양방향 매핑의 규칙(연관관계의 주인)**
+    - 두 연관관계 중 하나를 연관관계 주인으로 정해야한다.
+    - 연관관계의 주인만이 *데이터베이스 연관관계와 매핑*되고 *외래 키를 관리(등록, 수정, 삭제)* 할 수 있다.
+    - 주인이 아닌 쪽은 *읽기*만 가능하다.
+
+- 어떤 연관관계를 주인으로 정할 지는 `mappedBy` 속성을 사용하면 된다.
+    - 주인은 `mappedBy` 속성을 사용하지 않는다.
+    - 주인이 아니면 `mappedBy` 속성을 사용해서 속성의 값으로 연관관계의 주인으로 지정해야 한다.
+
+- 연관관계의 주인은 외래 키의 위치와 관련해서 정해야지 비즈니스 중요도로 접근하면 안된다.
+    - 비즈니스 중요도를 배제하고 단순한 외래 키 관리자 정도의 의미만 부여해야 한다.
+
+## 양방향 연관관계의 주의사항
+
+양방향 연관관계를 설정하고 가장 흔히 하는 실수는 연관관계의 주인에는 값을 입력하지 않고, 주인이 아닌 곳에만 값을 입력하는 것이다.
+
+- 주인이 아닌 곳에서만 연관관계를 설정한 코드
+    ```java
+    // 연관관계의 주인인 Person.group에는 값이 입력되지 않고
+    // Group.persons에만 값을 입력한 상태
+    Group groupA = new Group("그룹 A");
+
+    Person persons[] = {
+            new Person("홍길동", 20),
+            new Person("김철수", 23),
+            new Person("이영희", 19)
+    };
+
+    em.persist(groupA);
+
+    for (Person p : persons) {
+        groupA.getPersons().add(p);
+        em.persist(p);
+    }
+    ```
+
+- `Person` 테이블을 조회한 결과
+    PERSON_ID|AGE|NAME|GROUP_ID
+    --|--|--|--
+    1| 20|홍길동 | `null`|
+    2| 23|김철수 | `null`|
+    3| 19|이영희 | `null`|
+
+외래 키 컬럼에 `null`로 저장되었는데, *연관관계의 주인이 아닌 필드에만 값을 저장했기 떄문이다.*  
+연관관계의 주인만이 외래 키의 값을 변경할 수 있다.
+
+### 순수 객체까지 고려한 양방향 연관관계
+
+양방향 연관관계에서 연관관계인 양쪽 모두 값을 입력해주는 것이 가장 안전하다. 양쪽 방향 모두 값을 입력하지 않으면 순수한 객체 상태에서 심각한 문제가 발생한다.
+
+- 연관관계 주인 필드에만 값을 입력하고 반대 방향에는 입력하지 않음.
+    ```java
+    Group groupA = new Group("그룹 A");
+
+    Person persons[] = {
+        new Person("홍길동", 20, groupA),
+        new Person("김철수", 23, groupA),
+        new Person("이영희", 19, groupA)
+    };
+
+    em.persist(groupA);
+
+    for (Person p : persons) {
+        em.persist(p);
+    }
+
+    tx.commit();
+
+    Group findGroup = em.find(Group.class, 1L);
+    List<Person> findPersons = findGroup.getPersons();
+
+    System.out.println(findPersons.size()); // 0
+    ```
+    - JPA를 사용하지 않는 순수 객체에서는 그룹에 소속된 사람이 몇 명인지 전혀 조회되지 않아 0명으로 출력되는 문제가 발생했다.
+- 양방향 연관관계에서는 양쪽 다 관계를 설정해야 한다.
+    ```java
+    Group groupA = new Group("그룹 A");
+
+    Person persons[] = {
+            new Person("홍길동", 20, groupA),
+            new Person("김철수", 23, groupA),
+            new Person("이영희", 19, groupA)
+    };
+
+    tx.begin();
+
+    em.persist(groupA);
+
+    for (Person p : persons) {
+        groupA.getPersons().add(p);
+        em.persist(p);
+    }
+
+    tx.commit();
+
+    Group findGroup = em.find(Group.class, 1L);
+    List<Person> findPersons = findGroup.getPersons();
+
+    System.out.println(findPersons.size()); // 3
+    ```
+
+- **연관관계 편의 메소드**: setter 메소드를 수정해서 양방향 관계에서 두 코드를 하나로 묶는 것이 안전하다.
+    ```java
+    @Entity
+    class Person {
+        @Id
+        @Column(name = "person_id")
+        private Long id;
+
+        // 연관관계의 주인 필드
+        @ManyToOne
+        @JoinColumn(name = "group_id")
+        private Group group;
+
+        // 연관관계 편의 메서드 : 양방향 관계 모두를 하나의 코드로 묶음
+        public void setGroup(Group group) {
+            // 다른 엔티티로 변경할 때 기존 엔티티를 제거하는 코드
+            // 변경된 연관관계는 관계를 제거해주는 것이 안전하다.
+            if (this.group != null)
+                this.group.getPersons().remove(this);
+
+            this.group = group;
+            this.group.getPersons().add(this);
+        }
+    }
+    ```
+
+    ```java
+    Group groupA = new Group("그룹 A");
+
+    Person persons[] = {
+            new Person("홍길동", 20),
+            new Person("김철수", 23),
+            new Person("이영희", 19)
+    };
+
+    tx.begin();
+
+    em.persist(groupA);
+
+    for (Person p : persons) {
+        p.setGroup(groupA); // 연관관계 편의 메서드
+        em.persist(p);
+    }
+    ```
+
+단방향 매핑은 언제나 연관관계의 주인이며, 양방향은 여기에 연관관계를 하나 추가했을 뿐이다. 단방향과 비교해서 양방향의 장점은 반대 방향으로 객체 그래프 탐색 기능을 추가된 것 뿐이다.
+
+- 단방향 매핑만으로 테이블과 객체의 연관관계 매핑은 이미 완료됨.
+- 단방향을 양방향으로 만들면 반대방향으로 객체 그래프 탐색 기능이 추가됨.
+- 양방향 연관관계를 매핑하려면 객체에서 양쪽 방향을 모두 관리해야 함.
+
+> 양방향 매핑 시 무한 루프에 빠지지 않게 조심해야 한다. 예를 들어 엔티티에 `toString()`를 사용 시 연관된 엔티티끼리 `toString()`를 호출하면서 무한 루프에 빠질 수 있다.  
+이런 문제는 JSON으로 변환할 때도 자주 발생하는데 JSON 라이브러리들은 무한 루프를 빠지지 않도록 하는 기능을 제공한다.  
+Lomobok에서 `@ToString()` 사용 시 이러한 무한 루프에 빠지기 쉬운 데, `exclude` 속성을 이용해서 무한 루프를 해결 할 수 있다.  

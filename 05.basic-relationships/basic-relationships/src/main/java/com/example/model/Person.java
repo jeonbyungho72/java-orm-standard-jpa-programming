@@ -12,11 +12,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,5 +37,20 @@ public class Person {
         this.name = name;
         this.age = age;
         this.group = group;
+    }
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // 연관관계 편의 메서드
+    public void setGroup(Group group) {
+        // 다른 엔티티로 변경할 때 기존 엔티티를 제거하는 코드
+        if (this.group != null)
+            this.group.getPersons().remove(this);
+
+        this.group = group;
+        this.group.getPersons().add(this);
     }
 }
