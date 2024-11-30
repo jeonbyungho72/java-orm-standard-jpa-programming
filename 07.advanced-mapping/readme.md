@@ -107,3 +107,66 @@ ORM에서 이야기하는 상속 관계 매핑은 객체의 상속 구조와 데
     - 직접 생성해서 사용하는 일은 거의 없으므로 추상 클래스로 만드는 것을 권장한다.
 
 `@MappedSuperclass`는 테이블과 관계 없고 단순히 엔티티가 공통으로 사용하는 매핑 정보를 모와주는 역할을 할 뿐이다. ORM에서 진정한 상속 매핑은 *객체 상속을 데이터베이스의 슈퍼타입 서브타입 관계와 매핑하는 것*이다.
+
+# 복합 키와 식별 관계 매핑
+
+데이터베이스 테이블 사이에 관계는 외래 키가 기본 키와 포함되는 지 여부에 따라 식별 관계와 비식별 관계로 구분한다.
+
+## 식별 관계(Identifying Relationship)
+
+식별 관계는 부모 테이블의 기본 키를 내려 받아서 자식 테이블의 기본 키(PK) + 외래 키(FK)로 사용하는 관계이다.
+
+```mermaid
+erDiagram 
+    PARENT { 
+        long parent_id pk
+        string name 
+    }
+
+    CHILD { 
+        long child_id PK 
+        long parent_id PK,FK 
+        string description 
+    } 
+
+    PARENT ||--o{ CHILD : includes
+```
+
+## 비식별 관계(Non-Identifying Relationship)
+
+비식별 관계는 부모 테이블의 기본 키를 받아서 자식 테이블의 외래(FK)로만 사용하는 관계이다.
+
+- **필수적인 비식별 관계**(Mandatory): 외래 키에 null을 허용하지 않는다. 연관관계를 필수적으로 맺어야 한다.
+    ```mermaid
+    erDiagram 
+        PARENT { 
+            long parent_id pk
+            string name 
+        }
+
+        CHILD { 
+            long child_id PK 
+            long parent_id FK 
+            string description 
+        } 
+
+        PARENT ||--o{ CHILD : has
+    ```
+- **선택적 비식별 관계**(Optional): 외래 키에 null을 허용한다. 연관관계를 맺을지 말지 선택할 수 있다.
+    ```mermaid
+    erDiagram 
+        PARENT { 
+            long parent_id pk
+            string name 
+        }
+
+        CHILD { 
+            long child_id PK 
+            long parent_id FK 
+            string description 
+        } 
+
+        PARENT ||..o{ CHILD : has
+    ```
+
+최근에는 비식별 관계를 주로 사용하고 꼭 필요한 곳에만 식별 관계를 사용하는 추세이다.
