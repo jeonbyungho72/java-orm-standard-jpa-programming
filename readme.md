@@ -5,7 +5,7 @@
 1. [영속성 관리](03.persistence_manager/readme.md)
 1. [엔티티 매핑](04.entity-mapping/readme.md)
 1. [연관관계 매핑 기초](05.basic-relationships/readme.md)
-1. 다양한 연관관계 매핑
+1. [다양한 연관관계 매핑](06.various-relationships-mapping/readme.md)
 1. 고급 매핑
 1. 프록시와 연관관계 관리
 1. 값 타입
