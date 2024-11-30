@@ -53,3 +53,57 @@ ORM에서 이야기하는 상속 관계 매핑은 객체의 상속 구조와 데
     - 자식 테이블을 통합해서 쿼리하기 어렵다.
 - **특징**
     - 구분 컬럼을 사용하지 않는다.(부모 엔티티를 테이블로 만들지 않고 자식 테이블에 부모 엔티티의 컬럼을 포함 모든 컬럼을 포함 시키기 때문)
+
+# `@MappedSuperclass`
+
+부모 클래스는 테이블과 매핑하지 않고 부모 클래스를 상속 받는 자식 클래스에게 매핑 정보만 제공하고 싶으면 `@MappedSuperclass`를 사용하면 된다.  
+
+`@MappedSuperclass`는 추상 클래스와 비슷한데 `@Entity`와 달리 테이블과 매핑되지 않는다. 해당 어노테이션은 매핑 정보를 상속할 목적으로만 사용된다.
+
+`@AttributeOverride`, `@AttributeOverrides`는 부모로부터 물려받은 매핑 정보를 재정의할 때 사용된다.(연관관계를 재정의 `@AssociationOverride`, `@AssociationOverrides`)
+
+- `Person.java`
+    ```java
+    @MappedSuperclass
+    public class Person {
+        @Id
+        @GeneratedValue
+        private Long id;
+
+        @Column(name = "name")
+        private String username;
+        private int age;
+    }
+    ```
+    - `@MappedSuperclass`를 지정한 객체는 주로 사용하는 공통의 매핑 정보를 정의한다. 그리고 자식 엔티티들은 상속을 통해 해당 객체의 매핑 정보를 물려 받는다.
+- `Member.java`
+    ```java
+    @Entity
+    @AttributeOverride(name = "id", column = @Column(name = "member_id"))
+    public class Member extends Person {
+
+        private String email;
+        private String password;
+    }
+    ```
+    - Member 테이블의 컬럼: `MEMBER_ID`|`AGE`|`NAME`|`EMAIL`|`PASSWORD`|
+- `Admin.java`
+    ```java
+        @Entity
+        @AttributeOverrides({
+            @AttributeOverride(name = "id", column = @Column(name = "admin_id")),
+            @AttributeOverride(name = "name", column = @Column(name = "admin_name"))
+        })
+        public class Admin extends Person {
+            @Column(name = "admin_no")
+            private String adminNumber;
+        }
+    ```
+    - Admin 테이블의 컬럼: `ADMIN_ID`|`AGE`|`ADMIN_NAME`|`ADMIN_NO`|
+
+- **`@MappedSuperclass`의 특징**
+    - 테이블과 매핑되지 않고 자식 클래스에 엔티티의 매핑 정보를 상속하기 위해 사용한다.
+    - `@MappedSuperclass`로 지정한 클래스는 엔티티가 아니다.(당연히 `em.find()`, JPQL에서 사용할 수 없음)
+    - 직접 생성해서 사용하는 일은 거의 없으므로 추상 클래스로 만드는 것을 권장한다.
+
+`@MappedSuperclass`는 테이블과 관계 없고 단순히 엔티티가 공통으로 사용하는 매핑 정보를 모와주는 역할을 할 뿐이다. ORM에서 진정한 상속 매핑은 *객체 상속을 데이터베이스의 슈퍼타입 서브타입 관계와 매핑하는 것*이다.
