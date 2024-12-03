@@ -76,6 +76,16 @@ JPA에서 엔티티를 저장할 때 연관된 모든 엔티티는 영속 상태
 
 JPA는 `CASCADE` 옵션으로 영속성 전이를 제공한다.
 
+## CASCADE의 종류
+
+- **`cascade = CascadeType[]`의 종류**: 여러 속성을 같이 사용할 수 있다.
+    - `CascadeType.ALL`: 모두 적용
+    - `CascadeType.PERSIST`: 영속
+    - `CascadeType.MERGE`: 병합
+    - `CascadeType.REMOVE`: 삭제
+    - `CascadeType.REFRESH`: REFRESH
+    - `CascadeType.DETACH`: DETACH
+
 # 고아 객체(`Orphan`)
 
 JPA는 부모 엔티티와 연관관계가 끊어진 자식 엔티티를 자동으로 삭제하는 기능을 제공하는데 이것을 **고아 객체 제거**[^1]라고 한다.  
