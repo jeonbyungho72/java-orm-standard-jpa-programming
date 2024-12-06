@@ -8,7 +8,7 @@
 1. [다양한 연관관계 매핑](06.various-relationships-mapping/readme.md)
 1. [고급 매핑](07.advanced-mapping/readme.md)
 1. [프록시와 연관관계 관리](08.proxy-relationship-management/readme.md)
-1. 값 타입
+1. [값 타입](09.value-type/readme.md)
 <!-- 1. 객체지향 쿼리 언어 -->
 <!-- 1. 웹 애플리케이션 제작 -->
 <!-- 1. 스프링 데이터 JPA -->
